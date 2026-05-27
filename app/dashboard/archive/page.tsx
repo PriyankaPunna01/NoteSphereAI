@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { NoteCard } from '@/components/notes/note-card'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
+import { useExitPrompt } from '@/hooks/useExitPrompt'
 
 type Note = {
   id: string
@@ -15,6 +16,7 @@ type Note = {
 }
 
 export default function ArchivePage() {
+  useExitPrompt()
   const [notes, setNotes] = useState<Note[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -99,19 +101,7 @@ export default function ArchivePage() {
           </div>
         ) : filteredNotes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <svg
-              className="w-24 h-24 text-muted-foreground/30 mb-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M20.354 15.354A9 9 0 108.646 3.646 9 9 0 0020.354 15.354z"
-              />
-            </svg>
+            
             <h2 className="text-2xl font-semibold text-foreground mb-2">
               No archived notes
             </h2>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Bell, Trash2 } from 'lucide-react'
+import { useExitPrompt } from '@/hooks/useExitPrompt'
 
 type Reminder = {
   id: string
@@ -14,6 +15,7 @@ type Reminder = {
 }
 
 export default function RemindersPage() {
+  useExitPrompt()
 
   const supabase = createClient()
 
@@ -86,14 +88,13 @@ export default function RemindersPage() {
 
   useEffect(() => {
 
-    const interval = setInterval(() => {
-      checkReminders()
-    }, 1000)
+  const interval = setInterval(() => {
+    checkReminders()
+  }, 1000)
 
-    return () =>
-      clearInterval(interval)
+  return () => clearInterval(interval)
 
-  }, [reminders, isAlarmPlaying])
+}, [])
 
   const stopAlarm = async () => {
 
@@ -134,13 +135,19 @@ export default function RemindersPage() {
       )
 
       if (
-        !reminder.notified &&
+        !reminder.notified && !isAlarmPlaying &&
         reminderTime <= now
       ) {
 
         setCurrentReminder(reminder)
 
         setIsAlarmPlaying(true)
+        await supabase
+  .from('reminders')
+  .update({
+    notified: true,
+  })
+  .eq('id', reminder.id)
 
         if (
           'Notification' in window &&
@@ -347,21 +354,25 @@ export default function RemindersPage() {
         />
 
         <input
-          type="datetime-local"
-          value={reminderAt}
-          onChange={(e) =>
-            setReminderAt(
-              e.target.value
-            )
-          }
-          className="
-            w-full
-            border
-            rounded-2xl
-            px-4
-            py-4
-          "
-        />
+  type="datetime-local"
+  value={reminderAt}
+  onChange={(e) =>
+    setReminderAt(e.target.value)
+  }
+  className="
+    w-full
+    border
+    rounded-2xl
+    px-4
+    py-4
+    bg-white
+    text-black
+  "
+  style={{
+    backgroundColor: "white",
+    color: "black",
+  }}
+/>
 
         <Button
           onClick={addReminder}

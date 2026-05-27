@@ -280,7 +280,9 @@ export default function DashboardPage() {
                           category: note.category,
                         }}
                         onDelete={() => handleDeleteNote(note.id)}
+                        onArchive={() => handleArchiveNote(note.id)}
                         onTogglePin={handleTogglePin}
+
                       />
                     </div>
                   ))}

@@ -5,6 +5,7 @@ export const dynamic = 'force-static'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useExitPrompt } from '@/hooks/useExitPrompt'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -60,6 +61,8 @@ export default function NoteEditorPage() {
 
   const params = useParams()
   const router = useRouter()
+    useExitPrompt() // 👈 ADD THIS LINE
+
 
   const noteId = params.id as string
 
@@ -442,7 +445,33 @@ export default function NoteEditorPage() {
 
     }
   }
+  const handleRemoveSummary = async () => {
 
+  try {
+
+    const { error } = await supabase
+      .from('notes')
+      .update({
+        ai_summary: null,
+      })
+      .eq('id', noteId)
+
+    if (error) throw error
+
+    setAiSummary('')
+
+  } catch (error) {
+
+    console.error(
+      'Error removing summary:',
+      error
+    )
+
+    alert(
+      'Failed to remove summary.'
+    )
+  }
+}
   const startRecording = async () => {
 
   try {
@@ -748,9 +777,10 @@ export default function NoteEditorPage() {
       <div className="flex items-center gap-2 mb-5 flex-wrap">
 
         <button
-          onClick={() =>
-            router.push('/dashboard')
-          }
+          onClick={() => {
+  const confirmExit = window.confirm("Are you sure you want to go back?");
+  if (confirmExit) router.push('/dashboard');
+}}
           className="flex items-center gap-1.5 text-sm font-medium"
         >
 
@@ -1163,11 +1193,44 @@ export default function NoteEditorPage() {
 
             <div className="flex items-center gap-2 mb-3">
 
-              <Bot className="w-4 h-4" />
+              <div className="flex items-center justify-between mb-3">
 
-              <h4 className="text-sm font-semibold uppercase tracking-wide">
-                AI Summary
-              </h4>
+  <div className="flex items-center gap-2">
+
+    <Bot className="w-4 h-4" />
+
+    <h4 className="text-sm font-semibold uppercase tracking-wide">
+      AI Summary
+    </h4>
+
+  </div>
+
+  <div className="flex items-center gap-2">
+
+    {category && (
+      <span className="text-xs px-2.5 py-1 rounded-full bg-secondary border">
+        {category}
+      </span>
+    )}
+
+    <button
+      onClick={handleRemoveSummary}
+      className="
+        px-3 py-1
+        text-xs
+        rounded-full
+        bg-red-100
+        text-red-600
+        hover:bg-red-200
+        transition
+      "
+    >
+      Remove
+    </button>
+
+  </div>
+
+</div>
 
               {category && (
                 <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-secondary border">

@@ -1,14 +1,14 @@
-import type { CapacitorConfig } from '@capacitor/cli'
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.notesphere.app',
   appName: 'NoteSphere',
-  webDir: 'out',
+  webDir: 'dist',
 
   server: {
-    url: 'https://notesphere-ai.vercel.app',
-    cleartext: true,
-  },
-}
+    url: 'https://notesphereai-app.vercel.app',
+    cleartext: true
+  }
+};
 
-export default config
+export default config;

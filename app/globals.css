@@ -123,3 +123,14 @@
     @apply bg-background text-foreground;
   }
 }
+input,
+textarea,
+select {
+  background-color: white !important;
+  color: black !important;
+}
+
+input[type="datetime-local"] {
+  appearance: none;
+  -webkit-appearance: none;
+}

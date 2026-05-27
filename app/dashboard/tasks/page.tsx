@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { CheckSquare, Trash2 } from 'lucide-react'
+import { useExitPrompt } from '@/hooks/useExitPrompt'
 
 type Task = {
   id: string
@@ -12,6 +13,7 @@ type Task = {
 }
 
 export default function TasksPage() {
+  useExitPrompt()
 
   const supabase = createClient()
 
