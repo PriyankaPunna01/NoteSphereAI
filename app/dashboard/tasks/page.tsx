@@ -12,21 +12,30 @@ type Task = {
 }
 
 export default function TasksPage() {
+
   const supabase = createClient()
 
   const [title, setTitle] = useState('')
   const [tasks, setTasks] = useState<Task[]>([])
 
   const fetchTasks = async () => {
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', {
         ascending: false,
       })
 
     if (error) {
-      console.error('Error fetching tasks:', error)
+      console.error(error)
       return
     }
 
@@ -38,17 +47,25 @@ export default function TasksPage() {
   }, [])
 
   const addTask = async () => {
+
     if (!title.trim()) return
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
 
     const { error } = await supabase
       .from('tasks')
       .insert({
         title,
         completed: false,
+        user_id: user.id,
       })
 
     if (error) {
-      console.error('Error adding task:', error)
+      console.error(error)
       alert('Failed to add task.')
     } else {
       setTitle('')
@@ -59,6 +76,7 @@ export default function TasksPage() {
   const toggleTask = async (
     task: Task
   ) => {
+
     const { error } = await supabase
       .from('tasks')
       .update({
@@ -71,7 +89,10 @@ export default function TasksPage() {
     }
   }
 
-  const deleteTask = async (id: string) => {
+  const deleteTask = async (
+    id: string
+  ) => {
+
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -83,15 +104,34 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <CheckSquare className="w-7 h-7 text-primary" />
-        <h1 className="text-3xl font-bold">Tasks</h1>
+
+    <div className="w-full max-w-md mx-auto px-4 py-5">
+
+      {/* HEADER */}
+      <div className="flex items-center gap-3 mb-8">
+
+        <CheckSquare className="w-8 h-8 text-primary" />
+
+        <h1 className="text-4xl font-bold tracking-tight">
+          Tasks
+        </h1>
+
       </div>
 
-      {/* Add Task */}
-      <div className="border rounded-xl p-6 bg-card mb-8">
-        <div className="flex gap-3">
+      {/* ADD TASK */}
+      <div
+        className="
+          bg-white
+          rounded-3xl
+          border
+          p-4
+          shadow-sm
+          mb-6
+        "
+      >
+
+        <div className="flex flex-col gap-3">
+
           <input
             type="text"
             placeholder="Enter task..."
@@ -99,45 +139,88 @@ export default function TasksPage() {
             onChange={(e) =>
               setTitle(e.target.value)
             }
-            className="flex-1 border rounded-lg px-3 py-2"
+            className="
+              w-full
+              border
+              rounded-2xl
+              px-4
+              py-4
+              text-base
+              focus:outline-none
+            "
           />
 
-          <Button onClick={addTask}>
+          <Button
+            onClick={addTask}
+            className="
+              w-full
+              rounded-2xl
+              py-6
+              text-base
+              font-semibold
+            "
+          >
             Add Task
           </Button>
+
         </div>
+
       </div>
 
-      {/* Task List */}
-      <div className="space-y-3">
+      {/* TASK LIST */}
+      <div className="space-y-4">
+
         {tasks.length === 0 ? (
-          <p className="text-muted-foreground">
+
+          <div
+            className="
+              text-center
+              text-muted-foreground
+              py-10
+            "
+          >
             No tasks yet.
-          </p>
+          </div>
+
         ) : (
+
           tasks.map((task) => (
+
             <div
               key={task.id}
-              className="border rounded-xl p-4 bg-card flex items-center justify-between"
+              className="
+                bg-white
+                rounded-3xl
+                border
+                p-5
+                shadow-sm
+                flex
+                items-center
+                justify-between
+              "
             >
-              <label className="flex items-center gap-3 flex-1">
+
+              <label className="flex items-center gap-4 flex-1">
+
                 <input
                   type="checkbox"
                   checked={task.completed}
                   onChange={() =>
                     toggleTask(task)
                   }
+                  className="w-5 h-5"
                 />
 
                 <span
-                  className={
+                  className={`text-lg ${
                     task.completed
                       ? 'line-through text-muted-foreground'
                       : ''
-                  }
+                  }`}
                 >
                   {task.title}
                 </span>
+
               </label>
 
               <button
@@ -146,12 +229,20 @@ export default function TasksPage() {
                 }
                 className="text-red-500"
               >
-                <Trash2 className="w-5 h-5" />
+
+                <Trash2 className="w-6 h-6" />
+
               </button>
+
             </div>
+
           ))
+
         )}
+
       </div>
+
     </div>
+
   )
 }

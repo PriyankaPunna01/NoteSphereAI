@@ -1,6 +1,3 @@
-// app/dashboard/reminders/page.tsx
-// Updated version based on your uploaded file: :contentReference[oaicite:0]{index=0}
-
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -17,50 +14,66 @@ type Reminder = {
 }
 
 export default function RemindersPage() {
-  const supabase = createClient()
-  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [reminderAt, setReminderAt] = useState('')
-  const [reminders, setReminders] = useState<Reminder[]>([])
-  const [loading, setLoading] = useState(false)
+  const supabase = createClient()
+
+  const audioRef =
+    useRef<HTMLAudioElement | null>(null)
+
+  const [title, setTitle] =
+    useState('')
+
+  const [description, setDescription] =
+    useState('')
+
+  const [reminderAt, setReminderAt] =
+    useState('')
+
+  const [reminders, setReminders] =
+    useState<Reminder[]>([])
+
+  const [loading, setLoading] =
+    useState(false)
+
   const [isAlarmPlaying, setIsAlarmPlaying] =
     useState(false)
+
   const [currentReminder, setCurrentReminder] =
     useState<Reminder | null>(null)
 
-  // Initialize alarm audio and request notification permission
   useEffect(() => {
+
     const audio = new Audio('/alarm.mp3')
+
     audio.loop = true
     audio.preload = 'auto'
+
     audioRef.current = audio
 
     if ('Notification' in window) {
       Notification.requestPermission()
     }
 
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
-      }
-    }
   }, [])
 
-  // Fetch reminders
   const fetchReminders = async () => {
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
     const { data, error } = await supabase
       .from('reminders')
       .select('*')
-      .order('reminder_at', { ascending: true })
+      .eq('user_id', user.id)
+      .order('reminder_at', {
+        ascending: true,
+      })
 
     if (error) {
-      console.error(
-        'Error fetching reminders:',
-        error
-      )
+      console.error(error)
       return
     }
 
@@ -71,44 +84,51 @@ export default function RemindersPage() {
     fetchReminders()
   }, [])
 
-  // Check reminders every second
   useEffect(() => {
+
     const interval = setInterval(() => {
       checkReminders()
     }, 1000)
 
-    return () => clearInterval(interval)
+    return () =>
+      clearInterval(interval)
+
   }, [reminders, isAlarmPlaying])
 
-  // Stop alarm
   const stopAlarm = async () => {
+
     if (audioRef.current) {
+
       audioRef.current.pause()
+
       audioRef.current.currentTime = 0
     }
 
     setIsAlarmPlaying(false)
 
-    // Mark the current reminder as notified
     if (currentReminder) {
+
       await supabase
         .from('reminders')
-        .update({ notified: true })
+        .update({
+          notified: true,
+        })
         .eq('id', currentReminder.id)
     }
 
     setCurrentReminder(null)
+
     fetchReminders()
   }
 
-  // Check reminders
   const checkReminders = async () => {
-    // Prevent multiple alarms from playing
+
     if (isAlarmPlaying) return
 
     const now = new Date()
 
     for (const reminder of reminders) {
+
       const reminderTime = new Date(
         reminder.reminder_at
       )
@@ -117,34 +137,48 @@ export default function RemindersPage() {
         !reminder.notified &&
         reminderTime <= now
       ) {
+
         setCurrentReminder(reminder)
+
         setIsAlarmPlaying(true)
 
-        // Browser notification
         if (
           'Notification' in window &&
           Notification.permission ===
             'granted'
         ) {
-          new Notification('⏰ Reminder', {
-            body: reminder.title,
-          })
+
+          new Notification(
+            '⏰ Reminder',
+            {
+              body: reminder.title,
+            }
+          )
         }
 
-        // Play alarm
+        if ('vibrate' in navigator) {
+
+          navigator.vibrate([
+            500,
+            300,
+            500,
+            300,
+            1000,
+          ])
+        }
+
         try {
+
           if (audioRef.current) {
+
             audioRef.current.currentTime = 0
+
             await audioRef.current.play()
           }
-        } catch (err) {
-          console.error(
-            'Audio play error:',
-            err
-          )
-          alert(
-            'Unable to play alarm sound. Please make sure public/alarm.mp3 exists.'
-          )
+
+        } catch (error) {
+
+          console.error(error)
         }
 
         break
@@ -152,16 +186,24 @@ export default function RemindersPage() {
     }
   }
 
-  // Add reminder
   const addReminder = async () => {
+
     if (!title.trim() || !reminderAt) {
+
       alert(
-        'Please enter title and reminder date/time.'
+        'Please enter title and date/time.'
       )
+
       return
     }
 
     setLoading(true)
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
 
     const { error } = await supabase
       .from('reminders')
@@ -170,75 +212,106 @@ export default function RemindersPage() {
         description,
         reminder_at: reminderAt,
         notified: false,
+        user_id: user.id,
       })
 
     if (error) {
-      console.error(
-        'Error adding reminder:',
-        error
+
+      console.error(error)
+
+      alert(
+        'Failed to add reminder.'
       )
-      alert('Failed to add reminder.')
+
     } else {
+
       setTitle('')
       setDescription('')
       setReminderAt('')
+
       fetchReminders()
     }
 
     setLoading(false)
   }
 
-  // Delete reminder
-  const deleteReminder = async (id: string) => {
+  const deleteReminder = async (
+    id: string
+  ) => {
+
     const { error } = await supabase
       .from('reminders')
       .delete()
       .eq('id', id)
 
-    if (error) {
-      console.error(
-        'Error deleting reminder:',
-        error
-      )
-      alert('Failed to delete reminder.')
-    } else {
+    if (!error) {
       fetchReminders()
     }
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Bell className="w-7 h-7 text-primary" />
-        <h1 className="text-3xl font-bold">
+
+    <div className="w-full max-w-md mx-auto px-4 py-5">
+
+      {/* HEADER */}
+      <div className="flex items-center gap-3 mb-8">
+
+        <Bell className="w-8 h-8 text-primary" />
+
+        <h1 className="text-4xl font-bold">
           Reminders
         </h1>
+
       </div>
 
-      {/* Stop Alarm Banner */}
-      {isAlarmPlaying && currentReminder && (
-        <div className="mb-6 border border-red-300 bg-red-50 rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-red-700">
-              🔔 Reminder Alarm is Playing
-            </h2>
-            <p className="text-sm text-red-600">
-              {currentReminder.title}
-            </p>
-          </div>
+      {/* ALARM BANNER */}
+      {isAlarmPlaying &&
+        currentReminder && (
+
+        <div
+          className="
+            mb-6
+            rounded-3xl
+            border
+            border-red-300
+            bg-red-50
+            p-4
+          "
+        >
+
+          <h2 className="font-semibold text-red-700">
+            🔔 Reminder Alarm
+          </h2>
+
+          <p className="text-red-600 mt-1">
+            {currentReminder.title}
+          </p>
 
           <Button
             onClick={stopAlarm}
             variant="destructive"
+            className="w-full mt-4 rounded-2xl"
           >
             Stop Alarm
           </Button>
+
         </div>
+
       )}
 
-      {/* Add Reminder Form */}
-      <div className="border rounded-xl p-6 bg-card mb-8 space-y-4">
+      {/* FORM */}
+      <div
+        className="
+          bg-white
+          rounded-3xl
+          border
+          p-5
+          shadow-sm
+          mb-6
+          space-y-4
+        "
+      >
+
         <input
           type="text"
           placeholder="Reminder title"
@@ -246,87 +319,156 @@ export default function RemindersPage() {
           onChange={(e) =>
             setTitle(e.target.value)
           }
-          className="w-full border rounded-lg px-3 py-2"
+          className="
+            w-full
+            border
+            rounded-2xl
+            px-4
+            py-4
+          "
         />
 
         <textarea
-          placeholder="Description (optional)"
+          placeholder="Description"
           value={description}
           onChange={(e) =>
-            setDescription(e.target.value)
+            setDescription(
+              e.target.value
+            )
           }
-          className="w-full border rounded-lg px-3 py-2 min-h-[100px]"
+          className="
+            w-full
+            border
+            rounded-2xl
+            px-4
+            py-4
+            min-h-[120px]
+          "
         />
 
         <input
           type="datetime-local"
           value={reminderAt}
           onChange={(e) =>
-            setReminderAt(e.target.value)
+            setReminderAt(
+              e.target.value
+            )
           }
-          className="w-full border rounded-lg px-3 py-2"
+          className="
+            w-full
+            border
+            rounded-2xl
+            px-4
+            py-4
+          "
         />
 
         <Button
           onClick={addReminder}
           disabled={loading}
+          className="
+            w-full
+            rounded-2xl
+            py-6
+            text-base
+            font-semibold
+          "
         >
+
           {loading
             ? 'Adding...'
             : 'Add Reminder'}
+
         </Button>
+
       </div>
 
-      {/* Reminder List */}
+      {/* REMINDERS */}
       <div className="space-y-4">
+
         {reminders.length === 0 ? (
-          <p className="text-muted-foreground">
+
+          <div
+            className="
+              text-center
+              text-muted-foreground
+              py-10
+            "
+          >
             No reminders yet.
-          </p>
+          </div>
+
         ) : (
-          reminders.map((reminder) => (
-            <div
-              key={reminder.id}
-              className="border rounded-xl p-5 bg-card"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-semibold text-lg">
-                    {reminder.title}
-                  </h2>
 
-                  {reminder.description && (
-                    <p className="text-muted-foreground mt-2">
-                      {reminder.description}
+          reminders.map(
+            (reminder) => (
+
+              <div
+                key={reminder.id}
+                className="
+                  bg-white
+                  rounded-3xl
+                  border
+                  p-5
+                  shadow-sm
+                "
+              >
+
+                <div className="flex justify-between items-start gap-4">
+
+                  <div>
+
+                    <h2 className="font-bold text-2xl">
+                      {reminder.title}
+                    </h2>
+
+                    {reminder.description && (
+
+                      <p className="text-muted-foreground mt-3">
+                        {reminder.description}
+                      </p>
+
+                    )}
+
+                    <p className="text-primary mt-4">
+                      {new Date(
+                        reminder.reminder_at
+                      ).toLocaleString()}
                     </p>
-                  )}
 
-                  <p className="text-sm text-primary mt-3">
-                    {new Date(
-                      reminder.reminder_at
-                    ).toLocaleString()}
-                  </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {reminder.notified
+                        ? 'Already notified'
+                        : 'Pending'}
+                    </p>
 
-                  <p className="text-xs mt-2 text-muted-foreground">
-                    {reminder.notified
-                      ? 'Already notified'
-                      : 'Pending'}
-                  </p>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      deleteReminder(
+                        reminder.id
+                      )
+                    }
+                    className="text-red-500"
+                  >
+
+                    <Trash2 className="w-6 h-6" />
+
+                  </button>
+
                 </div>
 
-                <button
-                  onClick={() =>
-                    deleteReminder(reminder.id)
-                  }
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
               </div>
-            </div>
-          ))
+
+            )
+          )
+
         )}
+
       </div>
+
     </div>
+
   )
 }
