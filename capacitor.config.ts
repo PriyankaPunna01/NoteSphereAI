@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
 
   server: {
-    url: 'https://notesphereai-app.vercel.app',
+    url: 'https://notes-sphere-ai.vercel.app',
     cleartext: true
   }
 };

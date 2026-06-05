@@ -763,7 +763,9 @@ export default function NoteEditorPage() {
   if (isLoading) {
 
     return (
-      <div className="p-6">
+      <div className="  p-3
+  sm:p-4
+  md:p-6">
         Loading...
       </div>
     )
@@ -774,7 +776,9 @@ export default function NoteEditorPage() {
     <div className="w-full overflow-x-hidden px-3 sm:px-6 py-4">
 
       {/* TOOLBAR */}
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
+      <div className="flex flex-wrap
+  items-center
+  gap-2">
 
         <button
           onClick={() => {
@@ -966,35 +970,63 @@ export default function NoteEditorPage() {
             'Mixed Note') && (
           <>
 
-            <Input
-              value={title}
-              onChange={(e) =>
-                setTitle(
-                  e.target.value
-                )
-              }
-              placeholder="Note title"
-              className="text-2xl sm:text-4xl font-bold border-0 shadow-none px-0 bg-transparent"
-              style={{
-                textAlign:
-                  textAlign as any,
-              }}
-            />
+            <div
+  contentEditable
+  suppressContentEditableWarning
+  onInput={(e) =>
+    setTitle(
+      e.currentTarget.innerText
+    )
+  }
+  style={{
+    textAlign:
+      textAlign as any,
+  }}
+  className="
+    w-full
+    text-xl
+    sm:text-2xl
+    md:text-3xl
+    font-semibold
+    leading-tight
+    break-words
+    whitespace-pre-wrap
+    bg-transparent
+    focus:outline-none
+    mt-2
+  "
+>
+  {title}
+</div>
 
-            <textarea
-              value={content}
-              onChange={(e) =>
-                setContent(
-                  e.target.value
-                )
-              }
-              placeholder="Start typing..."
-              style={{
-                textAlign:
-                  textAlign as any,
-              }}
-              className="w-full min-h-[250px] sm:min-h-[500px] mt-6 resize-none focus:outline-none bg-transparent text-base sm:text-lg"
-            />
+           <div
+  contentEditable
+  suppressContentEditableWarning
+  onInput={(e) =>
+    setContent(
+      e.currentTarget.innerText
+    )
+  }
+  style={{
+    textAlign:
+      textAlign as any,
+  }}
+  className="
+    w-full
+    min-h-[250px]
+    sm:min-h-[500px]
+    mt-6
+    bg-transparent
+    text-base
+    sm:text-lg
+    text-current
+    focus:outline-none
+    whitespace-pre-wrap
+    break-words
+  "
+>
+  {content}
+</div>
 
           </>
         )}
@@ -1188,64 +1220,98 @@ export default function NoteEditorPage() {
         )}
 
         {/* AI SUMMARY */}
-        {aiSummary && (
-          <div className="mt-8 p-4 rounded-2xl border border-border bg-white/60 backdrop-blur-sm">
+{aiSummary && (
+  <div className="mt-8 p-4 rounded-2xl border border-border bg-white/20 backdrop-blur-sm">
 
-            <div className="flex items-center gap-2 mb-3">
-
-              <div className="flex items-center justify-between mb-3">
-
-  <div className="flex items-center gap-2">
-
-    <Bot className="w-4 h-4" />
-
-    <h4 className="text-sm font-semibold uppercase tracking-wide">
-      AI Summary
-    </h4>
-
-  </div>
-
-  <div className="flex items-center gap-2">
-
-    {category && (
-      <span className="text-xs px-2.5 py-1 rounded-full bg-secondary border">
-        {category}
-      </span>
-    )}
-
-    <button
-      onClick={handleRemoveSummary}
+    {/* HEADER */}
+    <div
       className="
-        px-3 py-1
-        text-xs
-        rounded-full
-        bg-red-100
-        text-red-600
-        hover:bg-red-200
-        transition
+        flex
+        flex-col
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+        gap-3
+        mb-4
       "
     >
-      Remove
-    </button>
+
+      {/* LEFT */}
+      <div className="flex items-center gap-2 flex-wrap">
+
+        <Bot className="w-4 h-4" />
+
+        <h4
+          className="
+            text-xs
+            sm:text-sm
+            font-semibold
+            uppercase
+            tracking-wide
+          "
+        >
+          AI Summary
+        </h4>
+
+      </div>
+
+      {/* RIGHT */}
+      <div
+        className="
+          flex
+          items-center
+          gap-2
+          flex-wrap
+        "
+      >
+
+        {category && (
+          <span
+            className="
+              text-[10px]
+              sm:text-xs
+              px-3
+              py-1
+              rounded-full
+              bg-white/40
+              backdrop-blur-sm
+              border
+              whitespace-nowrap
+            "
+          >
+            {category}
+          </span>
+        )}
+
+        <button
+          onClick={handleRemoveSummary}
+          className="
+            px-3
+            py-1
+            text-[10px]
+            sm:text-xs
+            rounded-full
+            bg-red-100
+            text-red-600
+            hover:bg-red-200
+            transition
+            whitespace-nowrap
+          "
+        >
+          Remove
+        </button>
+
+      </div>
+
+    </div>
+
+    {/* SUMMARY TEXT */}
+    <p className="text-sm leading-relaxed break-words">
+      {aiSummary}
+    </p>
 
   </div>
-
-</div>
-
-              {category && (
-                <span className="ml-auto text-xs px-2.5 py-1 rounded-full bg-secondary border">
-                  {category}
-                </span>
-              )}
-
-            </div>
-
-            <p className="text-sm leading-relaxed">
-              {aiSummary}
-            </p>
-
-          </div>
-        )}
+)}
 
       </div>
 
