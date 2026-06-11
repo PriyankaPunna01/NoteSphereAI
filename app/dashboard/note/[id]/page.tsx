@@ -120,6 +120,12 @@ export default function NoteEditorPage() {
   const recognitionRef =
     useRef<any>(null)
 
+  const titleRef =
+    useRef<HTMLDivElement>(null)
+
+  const contentRef =
+    useRef<HTMLDivElement>(null)
+
   useEffect(() => {
 
     async function loadNote() {
@@ -139,6 +145,14 @@ export default function NoteEditorPage() {
 
         setTitle(data.title || '')
         setContent(data.content || '')
+
+        if (titleRef.current)
+          titleRef.current.innerText =
+            data.title || ''
+
+        if (contentRef.current)
+          contentRef.current.innerText =
+            data.content || ''
         setTheme(data.theme || 'Light')
 
         setNoteType(
@@ -236,6 +250,13 @@ export default function NoteEditorPage() {
       recognition
 
   }, [])
+  useEffect(() => {
+    if (titleRef.current)
+      titleRef.current.innerText = title
+
+    if (contentRef.current)
+      contentRef.current.innerText = content
+  }, [noteType])
 
   const getThemeClass = () => {
 
@@ -345,58 +366,77 @@ export default function NoteEditorPage() {
     }
   }
 
-  const handleParaphrase =
-    async () => {
+  const handleParaphrase = async () => {
 
-      if (!content.trim()) {
-        alert(
-          'No content available to paraphrase.'
-        )
-        return
+  const currentContent =
+    contentRef.current?.innerText?.trim() ||
+    content.trim() ||
+    contentRef.current?.textContent?.trim() || ''
+
+  console.log('ref innerText:', contentRef.current?.innerText)
+  console.log('content state:', content)
+
+  if (!currentContent) {
+    alert(
+      'No content available to paraphrase.'
+    )
+    return
+  }
+
+  setIsParaphrasing(true)
+
+  try {
+
+    const res = await fetch(
+      '/api/paraphrase-note',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'application/json',
+        },
+        body: JSON.stringify({
+          content: currentContent,
+        }),
       }
+    )
 
-      setIsParaphrasing(true)
+    const data = await res.json()
 
-      try {
-
-        const res = await fetch(
-          '/api/paraphrase-note',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type':
-                'application/json',
-            },
-            body: JSON.stringify({
-              content,
-            }),
-          }
-        )
-
-        const data =
-          await res.json()
-
-        if (!res.ok)
-          throw new Error(
-            data.error ||
-              'Failed to paraphrase.'
-          )
-
-        setContent(
-          data.paraphrased || ''
-        )
-
-      } catch (error) {
-
-        console.error(error)
-
-      } finally {
-
-        setIsParaphrasing(false)
-
-      }
+    if (!res.ok) {
+      throw new Error(
+        data.error ||
+        'Failed to paraphrase.'
+      )
     }
 
+    const paraphrased =
+      data.paraphrased || ''
+
+    setContent(paraphrased)
+
+    if (contentRef.current) {
+      contentRef.current.innerText =
+        paraphrased
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Paraphrase error:',
+      error
+    )
+
+    alert(
+      'Failed to paraphrase note.'
+    )
+
+  } finally {
+
+    setIsParaphrasing(false)
+
+  }
+}
   const handleSave = async () => {
 
     setIsSaving(true)
@@ -971,62 +1011,60 @@ export default function NoteEditorPage() {
           <>
 
             <div
-  contentEditable
-  suppressContentEditableWarning
-  onInput={(e) =>
-    setTitle(
-      e.currentTarget.innerText
-    )
-  }
-  style={{
-    textAlign:
-      textAlign as any,
-  }}
-  className="
-    w-full
-    text-xl
-    sm:text-2xl
-    md:text-3xl
-    font-semibold
-    leading-tight
-    break-words
-    whitespace-pre-wrap
-    bg-transparent
-    focus:outline-none
-    mt-2
-  "
->
-  {title}
-</div>
+              ref={titleRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={(e) =>
+                setTitle(
+                  e.currentTarget.innerText
+                )
+              }
+              style={{
+                textAlign:
+                  textAlign as any,
+              }}
+              className="
+                w-full
+                text-xl
+                sm:text-2xl
+                md:text-3xl
+                font-semibold
+                leading-tight
+                break-words
+                whitespace-pre-wrap
+                bg-transparent
+                focus:outline-none
+                mt-2
+              "
+            />
 
-           <div
-  contentEditable
-  suppressContentEditableWarning
-  onInput={(e) =>
-    setContent(
-      e.currentTarget.innerText
-    )
-  }
-  style={{
-    textAlign:
-      textAlign as any,
-  }}
-  className="
-    w-full
-    min-h-[250px]
-    sm:min-h-[500px]
-    mt-6
-    bg-transparent
-    text-base
-    sm:text-lg
-    text-current
-    focus:outline-none
-    whitespace-pre-wrap
-    break-words
-  "
->
-  {content}
-</div>
+            <div
+              ref={contentRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={(e) =>
+                setContent(
+                  e.currentTarget.innerText
+                )
+              }
+              style={{
+                textAlign:
+                  textAlign as any,
+              }}
+              className="
+                w-full
+                min-h-[250px]
+                sm:min-h-[500px]
+                mt-6
+                bg-transparent
+                text-base
+                sm:text-lg
+                text-current
+                focus:outline-none
+                whitespace-pre-wrap
+                break-words
+              "
+            />
 
           </>
         )}

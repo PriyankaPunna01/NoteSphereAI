@@ -3,10 +3,10 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.notesphere.app',
   appName: 'NoteSphere',
-  webDir: 'dist',
+  webDir: 'out',
 
   server: {
-    url: 'https://notes-sphere-ai.vercel.app',
+    url: 'https://notesphereaiapp.vercel.app',
     cleartext: true
   }
 };

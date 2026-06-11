@@ -353,27 +353,23 @@ export default function RemindersPage() {
           "
         />
 
-        <input
-  type="datetime-local"
-  value={reminderAt}
-  onChange={(e) =>
-    setReminderAt(e.target.value)
-  }
-  className="
-    w-full
-    border
-    rounded-2xl
-    px-4
-    py-4
-    bg-white
-    text-black
-  "
-  style={{
-    backgroundColor: "white",
-    color: "black",
-  }}
-/>
-
+        <div className="w-full border rounded-2xl px-4 py-3 bg-white overflow-hidden">
+          <label className="text-xs text-muted-foreground mb-1 block">
+            Date & Time
+          </label>
+          <input
+            type="datetime-local"
+            value={reminderAt}
+            onChange={(e) =>
+              setReminderAt(e.target.value)
+            }
+            className="w-full max-w-full bg-white text-black text-sm focus:outline-none"
+            style={{
+              colorScheme: 'light',
+              maxWidth: '100%',
+            }}
+          />
+        </div>
         <Button
           onClick={addReminder}
           disabled={loading}

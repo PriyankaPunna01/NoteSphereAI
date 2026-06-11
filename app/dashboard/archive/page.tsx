@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { NoteCard } from '@/components/notes/note-card'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { useExitPrompt } from '@/hooks/useExitPrompt'
@@ -80,52 +79,86 @@ export default function ArchivePage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="border-b border-border p-6">
-        <h1 className="text-2xl font-bold text-foreground mb-4">Archive</h1>
-        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 max-w-md">
-          <Search className="w-4 h-4 text-muted-foreground" />
+
+      {/* HEADER */}
+      <div className="border-b border-border px-4 sm:px-6 py-4 sm:py-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-3 sm:mb-4">
+          Archive
+        </h1>
+        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 w-full sm:max-w-md">
+          <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <Input
             type="text"
             placeholder="Search archived notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent border-0 focus-visible:ring-0 focus-visible:outline-none"
+            className="bg-transparent border-0 focus-visible:ring-0 focus-visible:outline-none text-sm"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      {/* CONTENT */}
+      <div className="flex-1 overflow-auto px-4 sm:px-6 py-4 sm:py-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">Loading archived notes...</p>
+            <p className="text-muted-foreground text-sm">
+              Loading archived notes...
+            </p>
           </div>
         ) : filteredNotes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            
-            <h2 className="text-2xl font-semibold text-foreground mb-2">
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
               No archived notes
             </h2>
-            <p className="text-muted-foreground text-center max-w-sm">
+            <p className="text-muted-foreground text-sm max-w-sm">
               Archive notes to keep your dashboard clean while preserving them for later.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filteredNotes.map((note) => (
-              <NoteCard
+              <div
                 key={note.id}
-                note={{
-                  id: note.id,
-                  title: note.title,
-                  description: note.content?.substring(0, 100) || '',
-                  date: new Date(note.created_at).toLocaleDateString(),
-                  tags: [],
-                }}
-              />
+                className="border border-border rounded-2xl p-4 bg-background flex flex-col gap-3 shadow-sm"
+              >
+
+                {/* NOTE INFO */}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base leading-snug line-clamp-2">
+                    {note.title || 'Untitled'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {new Date(note.created_at).toLocaleDateString()}
+                  </p>
+                  {note.content && (
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2 line-clamp-3">
+                      {note.content.substring(0, 100)}
+                    </p>
+                  )}
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleUnarchive(note.id)}
+                    className="flex-1 px-3 py-2 text-xs font-semibold bg-blue-600 text-white rounded-full active:opacity-80"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    onClick={() => handleDelete(note.id)}
+                    className="flex-1 px-3 py-2 text-xs font-semibold bg-red-100 text-red-600 rounded-full active:opacity-80"
+                  >
+                    Delete
+                  </button>
+                </div>
+
+              </div>
             ))}
           </div>
         )}
       </div>
+
     </div>
   )
 }
