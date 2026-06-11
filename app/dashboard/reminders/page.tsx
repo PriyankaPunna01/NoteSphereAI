@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Bell, Trash2 } from 'lucide-react'
 import { useExitPrompt } from '@/hooks/useExitPrompt'
+import { LocalNotifications } from '@capacitor/local-notifications'
 
 type Reminder = {
   id: string
@@ -43,20 +44,26 @@ export default function RemindersPage() {
   const [currentReminder, setCurrentReminder] =
     useState<Reminder | null>(null)
 
-  useEffect(() => {
+ useEffect(() => {
 
-    const audio = new Audio('/alarm.mp3')
+  const audio = new Audio('/alarm.mp3')
 
-    audio.loop = true
-    audio.preload = 'auto'
+  audio.loop = true
+  audio.preload = 'auto'
 
-    audioRef.current = audio
+  audio.oncanplaythrough = () => {
+    console.log('Alarm loaded')
+  }
 
-    if ('Notification' in window) {
-      Notification.requestPermission()
-    }
+  audio.onerror = (e) => {
+    console.error('Alarm file error', e)
+  }
 
-  }, [])
+  audioRef.current = audio
+
+  LocalNotifications.requestPermissions()
+
+}, [])
 
   const fetchReminders = async () => {
 
@@ -176,18 +183,31 @@ export default function RemindersPage() {
 
         try {
 
-          if (audioRef.current) {
+  if (audioRef.current) {
 
-            audioRef.current.currentTime = 0
+    audioRef.current.currentTime = 0
 
-            await audioRef.current.play()
-          }
+    audioRef.current
+      .play()
+      .then(() => {
+        console.log('Alarm started')
+      })
+      .catch((err) => {
+        console.error(
+          'Audio blocked:',
+          err
+        )
 
-        } catch (error) {
+        alert(
+          'Audio playback blocked by Android'
+        )
+      })
+  }
 
-          console.error(error)
-        }
+} catch (error) {
 
+  console.error(error)
+}
         break
       }
     }
@@ -232,11 +252,24 @@ export default function RemindersPage() {
 
     } else {
 
-      setTitle('')
-      setDescription('')
-      setReminderAt('')
+      await LocalNotifications.schedule({
+    notifications: [
+      {
+        id: Date.now(),
+        title: title,
+        body: description || 'Reminder',
+        schedule: {
+          at: new Date(reminderAt),
+        },
+      },
+    ],
+  })
 
-      fetchReminders()
+  setTitle('')
+  setDescription('')
+  setReminderAt('')
+
+  fetchReminders()
     }
 
     setLoading(false)
