@@ -95,13 +95,16 @@ export default function RemindersPage() {
 
   useEffect(() => {
 
-  const interval = setInterval(() => {
-    checkReminders()
-  }, 1000)
+  const interval = setInterval(async () => {
+    await fetchReminders()
+  }, 5000)
 
   return () => clearInterval(interval)
 
 }, [])
+useEffect(() => {
+  checkReminders()
+}, [reminders])
 
   const stopAlarm = async () => {
 
@@ -141,10 +144,16 @@ export default function RemindersPage() {
         reminder.reminder_at
       )
 
-      if (
-        !reminder.notified && !isAlarmPlaying &&
-        reminderTime <= now
-      ) {
+      const diff =
+  now.getTime() -
+  reminderTime.getTime()
+
+if (
+  !reminder.notified &&
+  !isAlarmPlaying &&
+  diff >= 0 &&
+  diff <= 1000
+) {
 
         setCurrentReminder(reminder)
 
