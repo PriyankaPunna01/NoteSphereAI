@@ -1011,60 +1011,31 @@ export default function NoteEditorPage() {
           <>
 
             <div
-              ref={titleRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={(e) =>
-                setTitle(
-                  e.currentTarget.innerText
-                )
-              }
-              style={{
-                textAlign:
-                  textAlign as any,
-              }}
-              className="
-                w-full
-                text-xl
-                sm:text-2xl
-                md:text-3xl
-                font-semibold
-                leading-tight
-                break-words
-                whitespace-pre-wrap
-                bg-transparent
-                focus:outline-none
-                mt-2
-              "
-            />
-
-            <div
-              ref={contentRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={(e) =>
-                setContent(
-                  e.currentTarget.innerText
-                )
-              }
-              style={{
-                textAlign:
-                  textAlign as any,
-              }}
-              className="
-                w-full
-                min-h-[250px]
-                sm:min-h-[500px]
-                mt-6
-                bg-transparent
-                text-base
-                sm:text-lg
-                text-current
-                focus:outline-none
-                whitespace-pre-wrap
-                break-words
-              "
-            />
+  ref={contentRef}
+  contentEditable
+  suppressContentEditableWarning
+  onInput={(e) =>
+    setContent(
+      e.currentTarget.innerText
+    )
+  }
+  style={{
+    textAlign: textAlign as any,
+  }}
+  className="
+    w-full
+    min-h-[250px]
+    sm:min-h-[500px]
+    mt-6
+    bg-transparent
+    text-base
+    sm:text-lg
+    text-current
+    focus:outline-none
+    whitespace-pre-wrap
+    break-words
+  "
+/>
 
           </>
         )}
