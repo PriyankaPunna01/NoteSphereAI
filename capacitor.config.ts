@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
 
   server: {
-    url: 'https://notes-app-ai-mu.vercel.app',
+    url: 'https://noteapp-olive-chi.vercel.app',
     cleartext: true,
   },
 };

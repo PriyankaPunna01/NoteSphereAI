@@ -16,7 +16,6 @@ type Reminder = {
 }
 
 export default function RemindersPage() {
-  useExitPrompt()
 
   const supabase = createClient()
 

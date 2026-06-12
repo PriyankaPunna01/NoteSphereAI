@@ -13,7 +13,6 @@ type Task = {
 }
 
 export default function TasksPage() {
-  useExitPrompt()
 
   const supabase = createClient()
 

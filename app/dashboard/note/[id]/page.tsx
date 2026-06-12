@@ -60,7 +60,6 @@ export default function NoteEditorPage() {
 
   const params = useParams()
   const router = useRouter()
-    useExitPrompt() // 👈 ADD THIS LINE
 
 
   const noteId = params.id as string

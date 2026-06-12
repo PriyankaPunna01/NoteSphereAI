@@ -15,7 +15,6 @@ type Note = {
 }
 
 export default function ArchivePage() {
-  useExitPrompt()
   const [notes, setNotes] = useState<Note[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
