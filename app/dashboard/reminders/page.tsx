@@ -23,6 +23,9 @@ export default function RemindersPage() {
   const audioRef =
     useRef<HTMLAudioElement | null>(null)
 
+  // FIX 3: use a ref to track alarm state (avoids stale closure in intervals)
+  const isAlarmPlayingRef = useRef(false)
+
   const [title, setTitle] =
     useState('')
 
@@ -44,26 +47,47 @@ export default function RemindersPage() {
   const [currentReminder, setCurrentReminder] =
     useState<Reminder | null>(null)
 
- useEffect(() => {
+  useEffect(() => {
 
-  const audio = new Audio('/alarm.mp3')
+    const audio = new Audio('/alarm.mp3')
 
-  audio.loop = true
-  audio.preload = 'auto'
+    audio.loop = true
+    audio.preload = 'auto'
 
-  audio.oncanplaythrough = () => {
-    console.log('Alarm loaded')
-  }
+    audio.oncanplaythrough = () => {
+      console.log('Alarm loaded')
+    }
 
-  audio.onerror = (e) => {
-    console.error('Alarm file error', e)
-  }
+    audio.onerror = (e) => {
+      console.error('Alarm file error', e)
+    }
 
-  audioRef.current = audio
+    audioRef.current = audio
 
-  LocalNotifications.requestPermissions()
+    LocalNotifications.requestPermissions()
 
-}, [])
+  }, [])
+
+  // FIX 2: unlock audio on first user interaction (required by browsers/mobile)
+  useEffect(() => {
+    const unlock = () => {
+      if (audioRef.current) {
+        audioRef.current.play().then(() => {
+          audioRef.current!.pause()
+          audioRef.current!.currentTime = 0
+          console.log('Audio unlocked')
+        }).catch(() => {})
+      }
+      window.removeEventListener('touchstart', unlock)
+      window.removeEventListener('click', unlock)
+    }
+    window.addEventListener('touchstart', unlock)
+    window.addEventListener('click', unlock)
+    return () => {
+      window.removeEventListener('touchstart', unlock)
+      window.removeEventListener('click', unlock)
+    }
+  }, [])
 
   const fetchReminders = async () => {
 
@@ -93,18 +117,28 @@ export default function RemindersPage() {
     fetchReminders()
   }, [])
 
+  // FIX 4: fetch every 30s instead of every 1s to avoid hammering Supabase
   useEffect(() => {
 
-  const interval = setInterval(async () => {
-    await fetchReminders()
-  }, 5000)
+    const interval = setInterval(async () => {
+      await fetchReminders()
+    }, 30000)
 
-  return () => clearInterval(interval)
+    return () => clearInterval(interval)
 
-}, [])
-useEffect(() => {
-  checkReminders()
-}, [reminders])
+  }, [])
+
+  useEffect(() => {
+    checkReminders()
+  }, [reminders])
+
+  // FIX 4: separate local check every 5s (no DB call)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkReminders()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [reminders])
 
   const stopAlarm = async () => {
 
@@ -115,7 +149,9 @@ useEffect(() => {
       audioRef.current.currentTime = 0
     }
 
+    // FIX 3: update both state and ref
     setIsAlarmPlaying(false)
+    isAlarmPlayingRef.current = false
 
     if (currentReminder) {
 
@@ -134,7 +170,8 @@ useEffect(() => {
 
   const checkReminders = async () => {
 
-    if (isAlarmPlaying) return
+    // FIX 3: use ref instead of state (avoids stale closure)
+    if (isAlarmPlayingRef.current) return
 
     const now = new Date()
 
@@ -145,25 +182,29 @@ useEffect(() => {
       )
 
       const diff =
-  now.getTime() -
-  reminderTime.getTime()
+        now.getTime() -
+        reminderTime.getTime()
 
-if (
-  !reminder.notified &&
-  !isAlarmPlaying &&
-  diff >= 0 &&
-  diff <= 1000
-) {
+      // FIX 3: use ref instead of state
+      if (
+        !reminder.notified &&
+        !isAlarmPlayingRef.current &&
+        diff >= 0 &&
+        diff <= 10000
+      ) {
 
         setCurrentReminder(reminder)
 
+        // FIX 3: update both state and ref
         setIsAlarmPlaying(true)
+        isAlarmPlayingRef.current = true
+
         await supabase
-  .from('reminders')
-  .update({
-    notified: true,
-  })
-  .eq('id', reminder.id)
+          .from('reminders')
+          .update({
+            notified: true,
+          })
+          .eq('id', reminder.id)
 
         if (
           'Notification' in window &&
@@ -192,31 +233,31 @@ if (
 
         try {
 
-  if (audioRef.current) {
+          if (audioRef.current) {
 
-    audioRef.current.currentTime = 0
+            audioRef.current.currentTime = 0
 
-    audioRef.current
-      .play()
-      .then(() => {
-        console.log('Alarm started')
-      })
-      .catch((err) => {
-        console.error(
-          'Audio blocked:',
-          err
-        )
+            audioRef.current
+              .play()
+              .then(() => {
+                console.log('Alarm started')
+              })
+              .catch((err) => {
+                console.error(
+                  'Audio blocked:',
+                  err
+                )
 
-        alert(
-          'Audio playback blocked by Android'
-        )
-      })
-  }
+                alert(
+                  'Audio playback blocked by Android'
+                )
+              })
+          }
 
-} catch (error) {
+        } catch (error) {
 
-  console.error(error)
-}
+          console.error(error)
+        }
         break
       }
     }
@@ -262,23 +303,23 @@ if (
     } else {
 
       await LocalNotifications.schedule({
-    notifications: [
-      {
-        id: Date.now(),
-        title: title,
-        body: description || 'Reminder',
-        schedule: {
-          at: new Date(reminderAt),
-        },
-      },
-    ],
-  })
+        notifications: [
+          {
+            id: Date.now(),
+            title: title,
+            body: description || 'Reminder',
+            schedule: {
+              at: new Date(reminderAt),
+            },
+          },
+        ],
+      })
 
-  setTitle('')
-  setDescription('')
-  setReminderAt('')
+      setTitle('')
+      setDescription('')
+      setReminderAt('')
 
-  fetchReminders()
+      fetchReminders()
     }
 
     setLoading(false)
@@ -412,6 +453,7 @@ if (
             }}
           />
         </div>
+
         <Button
           onClick={addReminder}
           disabled={loading}
@@ -485,9 +527,12 @@ if (
                       ).toLocaleString()}
                     </p>
 
+                    {/* FIX 1: show correct status — Pending / Missed / Already notified */}
                     <p className="text-sm text-muted-foreground mt-2">
                       {reminder.notified
                         ? 'Already notified'
+                        : new Date(reminder.reminder_at) < new Date()
+                        ? 'Missed'
                         : 'Pending'}
                     </p>
 

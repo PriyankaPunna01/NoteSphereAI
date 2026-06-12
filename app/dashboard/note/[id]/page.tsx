@@ -1,6 +1,5 @@
 'use client'
 
-export const dynamic = 'force-static'
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -251,12 +250,12 @@ export default function NoteEditorPage() {
 
   }, [])
   useEffect(() => {
-    if (titleRef.current)
-      titleRef.current.innerText = title
-
-    if (contentRef.current)
-      contentRef.current.innerText = content
-  }, [noteType])
+  if (isLoading) return   // ← add this guard
+  if (titleRef.current)
+    titleRef.current.innerText = title
+  if (contentRef.current)
+    contentRef.current.innerText = content
+}, [noteType, isLoading])
 
   const getThemeClass = () => {
 
@@ -1004,41 +1003,32 @@ export default function NoteEditorPage() {
         </div>
 
         {/* TEXT NOTES */}
-        {(noteType ===
-          'Text Note' ||
-          noteType ===
-            'Mixed Note') && (
-          <>
+        {(noteType === 'Text Note' || noteType === 'Mixed Note') && (
+  <>
+    {/* TITLE */}
+    <div
+      ref={titleRef}
+      contentEditable
+      suppressContentEditableWarning
+      onInput={(e) => setTitle(e.currentTarget.innerText)}
+      className="w-full text-2xl font-bold bg-transparent focus:outline-none mb-2 whitespace-pre-wrap break-words"
+      data-placeholder="Note title..."
+    />
 
-            <div
-  ref={contentRef}
-  contentEditable
-  suppressContentEditableWarning
-  onInput={(e) =>
-    setContent(
-      e.currentTarget.innerText
-    )
-  }
-  style={{
-    textAlign: textAlign as any,
-  }}
-  className="
-    w-full
-    min-h-[250px]
-    sm:min-h-[500px]
-    mt-6
-    bg-transparent
-    text-base
-    sm:text-lg
-    text-current
-    focus:outline-none
-    whitespace-pre-wrap
-    break-words
-  "
-/>
+    <div className="border-t border-border/40 mb-2" />
 
-          </>
-        )}
+    {/* CONTENT */}
+    <div
+      ref={contentRef}
+      contentEditable
+      suppressContentEditableWarning
+      onInput={(e) => setContent(e.currentTarget.innerText)}
+      style={{ textAlign: textAlign as any }}
+      className="w-full min-h-[250px] sm:min-h-[500px] mt-6 bg-transparent text-base sm:text-lg text-current focus:outline-none whitespace-pre-wrap break-words"
+    />
+  </>
+)}
+
 
         {/* IMAGE NOTES */}
         {(noteType ===
